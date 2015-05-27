@@ -6,8 +6,8 @@ data("cts_cov_demo_1000")
 ## Set truncation value
 k <- 5
 
-## Truncate data
-truncdata <- truncateCH(data,k)
+## Run spark
+truncdata <- spark(data,informat="spark",outformat="spark",k=k)
 
 ## Construct drecap
 drecap <- ifelse(truncdata$recapture > 0,

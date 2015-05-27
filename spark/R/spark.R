@@ -1,15 +1,25 @@
 spark <- function(indata=NULL,infile=NULL,informat="spark",
-                  outfile=NULL,outformat="spark"){
-
-    ## Format input data if necessary
-
-    ## Truncate capture histories
-
-    ## Format output data if necessary
+                  outfile=NULL,outformat="spark",k=5,ragged=FALSE,...){
     
+    ## Format input data if necessary
+    if(informat=="mark")
+        indata <- mark2spark(indata,infile,...)
+    else if(informat!="spark")
+        stop("Sorry, I do not recognize that informat.\n")
+    
+    ## Truncate capture histories
+    outdata <- truncateCH(indata,k=k,ragged=ragged)
+    
+    ## Format output data if necessary
+    if(outformat=="mark")
+        return(spark2mark(outdata,outfile))
+    else if(outformat!="spark")
+        stop("Sorry, I do not recognize that outformat.\n")
+    else
+        return(outdata)
 }
 
-truncateCH1 <- function(chin,k){
+truncateCH1 <- function(chin,k,ragged=FALSE){
     ## Creates truncated records for a single individual
 
     ## Useful constants
@@ -39,43 +49,55 @@ truncateCH1 <- function(chin,k){
     ## Initialize output 
     chout <- matrix(".",nrelease,k+1)
 
+    ## Compute padding values if requested
+    if(ragged)
+        pad <- pmax(k+release-nocc,0)
+    else
+        pad <- rep(0,nrelease)
+
     ## Add release states in first column
-    chout[,1] <- chin[release]
+    chout[cbind(1:nrelease,pad+1)] <- chin[release]
     
     ## Create records for all but the final release
     for(j in 1:nrelease){
+        if(ragged)
+            ## Add padding
+            if(pad[j]>0)
+                chout[j,1:pad[j]] <- 0
+        
         if(recapture[j] < 0){
             ## Individual was not recaptured within k occasions
-            chout[j,2:(min(k+1,nocc-release[j]+1))] <- 0
+            chout[j,(2+pad[j]):(min(k+1,nocc-release[j]+1+pad[j]))] <- 0
         }
         else{
             ## Compute difference between release and recapture
             d <- recapture[j] - release[j]
 
-            if(d==0)
-                ## Individual was recaptured on subsequent occasion
-                chout[j,2] <- chin[recapture[j]]
-            else{
-                ## Individual was recaptured on occasion t1+2,...,t1+k
-                chout[j,2:d] <- 0
-                chout[j,d+1] <- chin[recapture[j]]
-            }
+            if(d>1)
+                ## Individual was not captured on subsequent occasion
+                chout[j,pad[j] + (2:d)] <- 0
+
+            ## Recapture
+            chout[j,d+1+pad[j]] <- chin[recapture[j]]
         }
     }
 
     ## Return new records
-    list(nrelease=nrelease,ch=chout,release=release,recapture=recapture)
+    list(nrelease=nrelease,
+         ch=chout,
+         release=release,
+         recapture=recapture)
 }
 
     
-truncateCH <- function(indata,k=NULL){
+truncateCH <- function(indata,k=NULL,ragged=FALSE){
 
     if(is.null(k))
         stop("You must specify a value for the truncation parameter, k.\n")
 
     
     ## Truncate capture histories
-    chnew.list <- apply(indata$chmat,1,truncateCH1,k=k)
+    chnew.list <- apply(indata$chmat,1,truncateCH1,k=k,ragged=ragged)
 
     ## Stack new capture histories
     chmat <- do.call("rbind",sapply(chnew.list,"[[","ch"))
@@ -83,7 +105,7 @@ truncateCH <- function(indata,k=NULL){
     ## Extract release and recapture times
     release <- unlist(sapply(chnew.list,"[[","release"))
     recapture <- unlist(sapply(chnew.list,"[[","recapture"))
-    
+
     ## Create individual mapping vector
     nrelease <- sapply(chnew.list,"[[","nrelease")
     ind <- rep(1:nrow(indata$chmat),nrelease)
