@@ -22,13 +22,27 @@ mark2spark <- function(indata=NULL,infile=NULL,group.df=NULL,covariates=NULL,use
     chmat <- RMark::splitCH(indata$ch)
 
     ## 2) Frequencies
-    freq <- indata$freq
+    if(is.null(indata$freq))
+        freq <- rep(1,nrow(indata))
+    else
+        freq <- indata$freq
 
     ## 3) Other
     othernames <- setdiff(colnames(indata),c("ch","freq"))
-    
-    if(length(othernames)>0)
-        other <- indata[,othernames]
+
+    ## if(length(othernames)==1){
+    ##     ## Why can't vectors be matrices with one column!
+    ##     other <- matrix(indata[,othernames],ncol=1)
+    ##     colnames(other) <- othernames
+    ## }
+    ## else if(length(othernames)>1){
+    ##     other <- indata[,othernames]
+    ##     colnames(other) <- othernames
+    ## }
+    if(length(othernames) > 0){
+        other <- as.matrix(indata[,othernames])
+        colnames(other) <- othernames
+    }
     else
         other <- NULL
 
@@ -59,8 +73,8 @@ spark2mark <- function(truncdata,outfile=NULL){
         markdf <- data.frame(ch=RMark::collapseCH(as.matrix(truncdata$chmat)),
                              truncdata$release,
                              truncdata$freq[truncdata$ind],
-                             truncdata$other[truncdata$ind],
-                             stringAsFactors=FALSE)
+                             truncdata$other[truncdata$ind,],
+                             stringsAsFactors=FALSE)
 
     ## Add column names
     colnames(markdf) <- c("ch","release","freq",
