@@ -27,22 +27,11 @@ mark2spark <- function(indata=NULL,infile=NULL,group.df=NULL,covariates=NULL,use
     else
         freq <- indata$freq
 
-    ## 3) Other
+    ## 3) Other columns
     othernames <- setdiff(colnames(indata),c("ch","freq"))
 
-    ## if(length(othernames)==1){
-    ##     ## Why can't vectors be matrices with one column!
-    ##     other <- matrix(indata[,othernames],ncol=1)
-    ##     colnames(other) <- othernames
-    ## }
-    ## else if(length(othernames)>1){
-    ##     other <- indata[,othernames]
-    ##     colnames(other) <- othernames
-    ## }
-    if(length(othernames) > 0){
-        other <- as.matrix(indata[,othernames])
-        colnames(other) <- othernames
-    }
+    if(length(othernames) > 0)
+        other <- indata[,othernames,drop=FALSE]
     else
         other <- NULL
 
@@ -80,8 +69,6 @@ spark2mark <- function(truncdata,outfile=NULL){
     colnames(markdf) <- c("ch","release","freq",
                           colnames(truncdata$other))
 
-    ##if(!is.null(outfile))
-        
     ## Return data frame
     markdf
 }

@@ -6,13 +6,13 @@ spark <- function(indata=NULL,infile=NULL,informat="spark",
         indata <- mark2spark(indata,infile,...)
     else if(informat!="spark")
         stop("Sorry, I do not recognize that informat.\n")
-
+    
     ## Remove histories that do not contribute to likelihood
     first <- apply(indata$chmat,1,function(w) min(which(w>0)))
     invalid <- which(first==ncol(indata$chmat))
 
     if(length(invalid) > 0){
-        cat("Note: Removing",length(invalid),"individuals first released on occasion",ncol(indata$chmat),".\n")
+        warning("Removing ",length(invalid)," individuals first released on occasion ",ncol(indata$chmat),".\n")
         
         indata$chmat <- indata$chmat[-invalid,]
         indata$freq <- indata$freq[-invalid]
@@ -20,6 +20,12 @@ spark <- function(indata=NULL,infile=NULL,informat="spark",
         othernames <- colnames(indata$other)
         indata$other <- as.matrix(indata$other[-invalid,])
         colnames(indata$other) <- othernames
+    }
+
+    ## Check value of k
+    if(k > (ncol(indata$chmat)-1)){
+        k <- ncol(indata$chmat)-1
+        warning("The value of k must be less than the number of capture occasions. Setting k=",k,". This will reproduce the full model with no truncation.\n")
     }
     
     ## Truncate capture histories

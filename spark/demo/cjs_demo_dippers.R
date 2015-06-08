@@ -5,13 +5,13 @@ library(RMark)
 data(dipper)
 
 ## Run spark
-dipper.trunc <- spark(dipper,informat="mark",outformat="mark",ragged=TRUE)
+dipper.trunc <- spark(dipper,informat="mark",outformat="mark",k=4,ragged=TRUE)
 
 ## Process data
 dipper.process <- process.data(dipper.trunc,
                                model="CJS",
                                begin.time=rep(1980:1985,2),
-                               #time.intervals=rep(c(1,.5,1,.75,.25,1),2),
+                               #time.intervals=c(1,.5,1,.75,.25,1),
                                groups=c("release","sex"))
 
 dipper.ddl <- make.design.data(dipper.process)
