@@ -56,17 +56,19 @@ spark2mark <- function(truncdata,outfile=NULL){
     if(is.null(truncdata$other))
         markdf <- data.frame(ch=RMark::collapseCH(as.matrix(truncdata$chmat)),
                              truncdata$release,
+                             truncdata$initial,
                              truncdata$freq[truncdata$ind],
                              stringsAsFactors=FALSE)
     else
         markdf <- data.frame(ch=RMark::collapseCH(as.matrix(truncdata$chmat)),
                              truncdata$release,
+                             truncdata$initial,
                              truncdata$freq[truncdata$ind],
                              truncdata$other[truncdata$ind,],
                              stringsAsFactors=FALSE)
 
     ## Add column names
-    colnames(markdf) <- c("ch","release","freq",
+    colnames(markdf) <- c("ch","release","initial","freq",
                           colnames(truncdata$other))
 
     ## Return data frame

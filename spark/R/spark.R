@@ -103,10 +103,17 @@ truncateCH1 <- function(chin,k,ragged=FALSE){
         }
     }
 
+    ## Identify time of initial capture occasion in truncated history
+    if(ragged)
+        initial <- release-pad
+    else
+        initial <- release
+
     ## Return new records
     list(nrelease=nrelease,
          ch=chout,
          release=release,
+         initial=initial,
          recapture=recapture)
 }
 
@@ -123,9 +130,10 @@ truncateCH <- function(indata,k=NULL,ragged=FALSE){
     ## Stack new capture histories
     chmat <- do.call("rbind",sapply(chnew.list,"[[","ch"))
 
-    ## Extract release and recapture times
+    ## Extract release and recapture times and initial times
     release <- unlist(sapply(chnew.list,"[[","release"))
     recapture <- unlist(sapply(chnew.list,"[[","recapture"))
+    initial <- unlist(sapply(chnew.list,"[[","initial"))
 
     ## Create individual mapping vector
     nrelease <- sapply(chnew.list,"[[","nrelease")
@@ -141,6 +149,7 @@ truncateCH <- function(indata,k=NULL,ragged=FALSE){
     output <- list(chmat=chmat,
                    nrelease=length(release),
                    release=release,
+                   initial=initial,
                    recapture=recapture,
                    ind=ind,
                    freq=indata$freq,
