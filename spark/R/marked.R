@@ -1,7 +1,11 @@
-## Functions for the input and output of data in marked's file
-## format.
+## Functions for the input and output of data in marked's file format.
 
 marked2spark <- function(indata=NULL,infile=NULL,group.df=NULL,covariates=NULL,use.comments=FALSE){
+
+  ## Requires functions from RMark
+  if (!requireNamespace("RMark", quietly = TRUE)) {
+    stop("RMark is needed for this function to work. Please install it.",call. = FALSE)
+  }
 
     ## Load data from infile if necessary
     if(is.null(indata)){
@@ -12,7 +16,7 @@ marked2spark <- function(indata=NULL,infile=NULL,group.df=NULL,covariates=NULL,u
 
     ## Separate input data into (possibly) three components
     ## 1) Matrix of capture histories
-    chmat <- indata$ch
+    chmat <- RMark::splitCH(indata$ch)
 
     ## 2) Frequencies
     if(is.null(indata$freq))
@@ -41,34 +45,41 @@ spark2marked <- function(truncdata,outfile=NULL){
     if (!requireNamespace("RMark", quietly = TRUE)) {
         stop("RMark is needed for this function to work. Please install it.",call. = FALSE)
     }
-    
+
     ## Create data frame by:
     ## 1) Collapsing histories
     ## 2) Binding the frequencies, release times, and other variables
 
-    if(is.null(truncdata$other))
-        markdf <- data.frame(ch=RMark::collapseCH(as.matrix(truncdata$chmat)),
-                             truncdata$release,
-                             truncdata$initial,
-                             truncdata$freq[truncdata$ind],
-                             stringsAsFactors=FALSE)
-    else
-        markdf <- data.frame(ch=RMark::collapseCH(as.matrix(truncdata$chmat)),
-                             truncdata$release,
-                             truncdata$initial,
-                             truncdata$freq[truncdata$ind],
-                             truncdata$other[truncdata$ind,],
-                             stringsAsFactors=FALSE)
+  markeddf <-
+    data.frame(
+      ch = RMark::collapseCH(as.matrix(truncdata$chmat)),
+      truncdata$release,
+      truncdata$initial,
+      stringsAsFactors = FALSE
+    )
 
-    ## Add column names
-    colnames(markdf) <- c("ch","release","initial","freq",
-                          colnames(truncdata$other))
+  if (truncdata$aggregated)
+    markeddf$freq = truncdata$freq
+  else{
+    markeddf$freq = truncdata$freq[truncdata$ind]
 
-    ## Return data frame
-    markdf
+    if (is.null(truncdata$other)) {
+      markeddf$freq = truncdata$other[truncdata$ind, ]
+    }
+  }
+
+  ## Add column names
+  colnames(markeddf) <- c("ch",
+                        "release",
+                        "initial",
+                        "freq",
+                        colnames(truncdata$other))
+
+  ## Return data frame
+  markeddf
 }
-    
-    
 
-    
-    
+
+
+
+

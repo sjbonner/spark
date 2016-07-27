@@ -41,18 +41,36 @@ system.time(dipper.model2 <- mark(dipper.process2,dipper.ddl2,
 
 dipper.model2$results$real
 
-## Compare point estimates
-dipper.results <- data.frame(dipper.model1$results$real[,c(1,3,4)],
-                             dipper.model2$results$real[,c(1,3,4)])
-colnames(dipper.results) <- c("estimate1","lcl1","ucl1",
-                              "estimate2","lcl2","ucl2")
-                              
-n <- nrow(dipper.results)
-jit <- .2
+# Construct data frame for ggplot2
+Occasion=rep(1:6,4)
+Sex=rep(rep(c("Female","Male"),c(6,6)),2)
 
-ggplot(dipper.results) +
-    geom_point(aes(x=(1:n)-jit,y=estimate1)) +
-        geom_point(aes(x=(1:n)+jit,y=estimate2,col="red"))
+dipper.results <- rbind(data.frame(Data="Truncated",
+                                   x=Occasion -.2,
+                                   Sex=Sex,
+                                   dipper.model1$results$real[,c(1,3,4)]),
+                        data.frame(Data="Original",
+                                   x=Occasion +.2,
+                                   Sex=Sex,
+                                   dipper.model2$results$real[,c(1,3,4)]))
 
+# Survival
+survindex = grep("^Phi",rownames(dipper.results))
 
+ggplot(dipper.results[survindex,],aes(x,estimate,group=Data,color=Data)) + 
+  geom_point() +
+  geom_errorbar(aes(ymin=lcl,ymax=ucl)) + 
+  facet_grid(~ Sex) +
+  ylim(c(0,1)) +
+  xlab("Occasion") + ylab("Survival Probability")
+
+# Capture
+capindex = grep("^p",rownames(dipper.results))
+
+ggplot(dipper.results[capindex,],aes(x,estimate,group=Data,color=Data)) + 
+  geom_point() +
+  geom_errorbar(aes(ymin=lcl,ymax=ucl)) + 
+  facet_grid(~ Sex) +
+  ylim(c(0,1)) +
+  xlab("Occasion") + ylab("Capture Probability")
 

@@ -2,8 +2,15 @@ Package: spark
 Title: Sparsification of Mark-Recapture Data
 Version: 0.0.0.9000
 Authors@R: person("Simon", "Bonner", , "simon.bonner@uky.edu", role = c("aut", "cre"))
-Description: spark is a tool for speeding the analysis of complex mark-recapture data sets by sparsifying the data. The primary function rewrites the capture histories separately for each release, instead of each individual, and truncates the remaining capture history to reduce the compuational burden. Further functions are provided to format data for different software packages.
-Depends: R (>= 3.0.0)
+Description: spark is a tool for speeding the analysis of complex mark-recapture
+    data sets by sparsifying the data. The primary function rewrites the capture
+    histories separately for each release, instead of each individual, and truncates
+    the remaining capture history to reduce the compuational burden. Further
+    functions are provided to format data for different software packages.
+Depends:
+    R (>= 3.0.0)
 License: GPL-3
-LazyData: true	
-Suggests: RMark
+LazyData: true
+Suggests:
+    RMark
+RoxygenNote: 5.0.1
