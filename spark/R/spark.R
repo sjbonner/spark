@@ -85,9 +85,9 @@
 ##'
 ##' ## Truncating the dipper data
 ##' library(RMark)
-##' dipper.trunc <- spark(dipper,informat="marked",outformat="marked",k=3)
+##' dipper.trunc = spark(dipper,informat="marked",outformat="marked",k=3)
 
-spark <- function(indata = NULL,
+spark = function(indata = NULL,
                   infile = NULL,
                   informat = "spark",
                   outfile = NULL,
@@ -98,16 +98,16 @@ spark <- function(indata = NULL,
                   ...) {
   ## Format input data if necessary
   if (informat == "mark")
-    indata <- mark2spark(indata, infile, ...)
+    indata = mark2spark(indata, infile, ...)
   else if (informat == "marked")
-    indata <- marked2spark(indata, infile, ...)
+    indata = marked2spark(indata, infile, ...)
   else if (informat != "spark")
     stop("Sorry, I do not recognize that informat.\n")
 
   ## Remove histories that do not contribute to likelihood
-  first <- apply(indata$chmat, 1, function(w)
+  first = apply(indata$chmat, 1, function(w)
     min(which(w > 0)))
-  invalid <- which(first == ncol(indata$chmat))
+  invalid = which(first == ncol(indata$chmat))
 
   if (length(invalid) > 0) {
     warning(
@@ -118,15 +118,15 @@ spark <- function(indata = NULL,
       ".\n"
     )
 
-    indata$chmat <- indata$chmat[-invalid, ]
-    indata$freq <- indata$freq[-invalid]
+    indata$chmat = indata$chmat[-invalid, ]
+    indata$freq = indata$freq[-invalid]
 
-    indata$other <- indata$other[-invalid, , drop = FALSE]
+    indata$other = indata$other[-invalid, , drop = FALSE]
   }
 
   ## Check value of k
   if (k > (ncol(indata$chmat) - 1)) {
-    k <- ncol(indata$chmat) - 1
+    k = ncol(indata$chmat) - 1
     warning(
       "The value of k must be less than the number of capture occasions. Setting k=",
       k,
@@ -135,7 +135,7 @@ spark <- function(indata = NULL,
   }
 
   ## Truncate capture histories
-  outdata <-
+  outdata =
     truncateCH(indata,
                k = k,
                ragged = ragged,
@@ -156,90 +156,73 @@ spark <- function(indata = NULL,
     return(outdata)
 }
 
-truncateCH1 <- function(chin, k, ragged = FALSE) {
+truncateCH1 = function(chin, k, ragged = FALSE) {
   ## Creates truncated records for a single individual
 
   ## Useful constants
-  nocc <- length(chin)                # Number of occasions
+  nocc = length(chin)                # Number of occasions
 
   ## Identify captures
-  capture <- which(chin > 0)
-  ncapture <- length(capture)
+  capture = which(chin > 0)
+  ncapture = length(capture)
 
   ## Identify times of release
   if (capture[ncapture] == nocc)
     ## Individual was last captured on final occasion
-    release <- capture[-ncapture]
+    release = capture[-ncapture]
   else
     ## Individual was last captured before final occasion
-    release <- capture
-  nrelease <- length(release)
+    release = capture
+  
+  ## Number of releases
+  nrelease = length(release)
 
   ## Identify times of recapture (within k occasions)
   if (capture[ncapture] == nocc)
     ## Individual was last captured on final occasion
-    recapture <- ifelse(capture[-1] - release <= k, capture[-1], -1)
+    recapture = ifelse(capture[-1] - release <= k, capture[-1], -1)
   else
     ## Individual was last captured before final occasion
-    recapture <-
+    recapture =
     c(ifelse(capture[-1] - release[-nrelease] <= k, capture[-1], -1), -1)
 
   ## Initialize output
-  chout <- matrix(".", nrelease, k + 1)
+  chout = matrix(".", nrelease, nocc)
 
-  ## Compute padding values if requested
-  if (ragged)
-    pad <- pmax(k + release - nocc, 0)
-  else
-    pad <- rep(0, nrelease)
-
-  ## Add release states in first column
-  chout[cbind(1:nrelease, pad + 1)] <- chin[release]
-
-  ## Create records for all but the final release
+  ## Create new records 
   for (j in 1:nrelease) {
-    if (ragged)
-      ## Add padding
-      if (pad[j] > 0)
-        chout[j, 1:pad[j]] <- 0
+    ## Release state
+    chout[j,release[j]] = chin[release[j]]
 
+    ## Complete the history
       if (recapture[j] < 0) {
         ## Individual was not recaptured within k occasions
-        chout[j, (2 + pad[j]):(min(k + 1, nocc - release[j] + 1 + pad[j]))] <-
-          0
+        chout[j, (release[j]+1):min(release[j]+k,nocc)] = 0
       }
       else{
         ## Compute difference between release and recapture
-        d <- recapture[j] - release[j]
+        d = recapture[j] - release[j]
 
         if (d > 1)
           ## Individual was not captured on subsequent occasion
-          chout[j, pad[j] + (2:d)] <- 0
+          chout[j, release[j] + (1:(d-1))] = 0
 
         ## Recapture
-        chout[j, d + 1 + pad[j]] <- chin[recapture[j]]
+        chout[j, release[j] + d] = chin[recapture[j]]
       }
   }
-
-  ## Identify time of initial capture occasion in truncated history
-  if (ragged)
-    initial <- release - pad
-  else
-    initial <- release
-
 
   ## Return new records
   list(
     nrelease = nrelease,
     ch = chout,
     release = release,
-    initial = initial,
     recapture = recapture
   )
 }
 
 
-truncateCH <- function(indata,
+truncateCH = function(indata,
                        k = NULL,
                        ragged = FALSE,
                        collapse = FALSE) {
@@ -248,7 +231,7 @@ truncateCH <- function(indata,
 
 
   ## Truncate capture histories
-  chnew.list <-
+  chnew.list =
     apply(indata$chmat,
           1,
           truncateCH1,
@@ -256,22 +239,22 @@ truncateCH <- function(indata,
           ragged = ragged)
 
   ## Stack new capture histories
-  chmat <- do.call("rbind", sapply(chnew.list, "[[", "ch"))
+  chmat = do.call("rbind", sapply(chnew.list, "[[", "ch"))
 
   ## Extract release and recapture times and initial times
-  release <- unlist(sapply(chnew.list, "[[", "release"))
-  recapture <- unlist(sapply(chnew.list, "[[", "recapture"))
-  initial <- unlist(sapply(chnew.list, "[[", "initial"))
+  release = unlist(sapply(chnew.list, "[[", "release"))
+  recapture = unlist(sapply(chnew.list, "[[", "recapture"))
+  initial = unlist(sapply(chnew.list, "[[", "initial"))
 
   ## Create individual mapping vector
-  nrelease <- sapply(chnew.list, "[[", "nrelease")
-  ind <- rep(1:nrow(indata$chmat), nrelease)
+  nrelease = sapply(chnew.list, "[[", "nrelease")
+  ind = rep(1:nrow(indata$chmat), nrelease)
 
   ## Add useful rownames
   if (is.null(rownames(indata$chmat)))
-    rownames(chmat) <- paste(ind, release, sep = ".")
+    rownames(chmat) = paste(ind, release, sep = ".")
   else
-    rownames(chmat) <-
+    rownames(chmat) =
     paste(rep(rownames(indata$chmat), nrelease), release, sep = ".")
 
   ## Create output object
@@ -305,7 +288,7 @@ truncateCH <- function(indata,
     )
   }
   else{
-    output <- list(
+    output = list(
       chmat = chmat,
       nrelease = length(release),
       release = release,
@@ -318,7 +301,7 @@ truncateCH <- function(indata,
     )
   }
 
-  class(output) <- "spark"
+  class(output) = "spark"
 
   ## Return output
   output

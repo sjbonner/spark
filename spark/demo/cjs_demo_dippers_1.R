@@ -12,8 +12,8 @@ dipper.trunc <- spark(dipper,informat="mark",outformat="mark",k=k)
 ## Process data
 dipper.process1 <- process.data(dipper.trunc,
                                 model="CJS",
-                                begin.time=rep(1:6,2),
-                                groups=c("initial","sex"))
+                                time.intervals=c(1,.5,1,.75,.25,1),
+                                groups=c("sex"))
 
 dipper.ddl1 <- make.design.data(dipper.process1)
 
@@ -30,6 +30,7 @@ dipper.model1$results$real
 ## Original data
 dipper.process2 <- process.data(dipper,
                                 model="CJS",
+                                time.intervals=c(1,.5,1,.75,.25,1),
                                 groups="sex")
 
 dipper.ddl2 <- make.design.data(dipper.process2)
@@ -49,7 +50,7 @@ Sex=rep(rep(c("Female","Male"),c(6,6)),2)
 dipper.results <- rbind(data.frame(Data="Truncated",
                                    x=Occasion -.2,
                                    Sex=Sex,
-                                   dipper.model1$results$real[-c(7,8,15,16,23,24,31,32),c(1,3,4)]),
+                                   dipper.model1$results$real[,c(1,3,4)]),
                         data.frame(Data="Original",
                                    x=Occasion +.2,
                                    Sex=Sex,

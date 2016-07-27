@@ -66,11 +66,10 @@ spark2mark <- function(truncdata, outfile = NULL) {
     data.frame(
       ch = RMark::collapseCH(as.matrix(truncdata$chmat)),
       truncdata$release,
-      truncdata$initial,
       stringsAsFactors = FALSE
     )
   
-  markdfnames = c("ch","release","initial","freq")
+  markdfnames = c("ch","release","freq")
   
   if (truncdata$aggregated){
     markdf$freq = truncdata$freq
