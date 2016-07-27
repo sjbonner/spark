@@ -1,4 +1,6 @@
+## Load packages
 library(RMark)
+library(ggplot2)
 
 ## Load data set
 infile = system.file("extdata", "msdata1000.inp", package = "spark")
@@ -13,10 +15,8 @@ msdata = spark(infile = infile,
 msprocessed.trunc =
   process.data(
     msdata,
-    model = "Multistrata",
-    groups = "release",
-    begin.time = c(1:30, rep(30, 4))
-  )
+    model = "Multistrata"
+    )
 
 ## 2) Build design data
 msddl.trunc = make.design.data(msprocessed.trunc,
@@ -28,14 +28,14 @@ msddl.trunc = make.design.data(msprocessed.trunc,
 
 ## 3) Fit model
 model.parameters = list(
-  S = list(formula =  ~ time + stratum),
-  p = list(formula =  ~ time + stratum),
+  S = list(formula =  ~ time),
+  p = list(formula =  ~ time),
   Psi = list(formula =  ~ stratum:tostratum - 1)
 )
 
 time.trunc =
   system.time(
-    msmodel.trunc = mark(
+    msmodel.trunc <- mark(
       msprocessed.trunc,
       msddl.trunc,
       model.parameters = model.parameters,
@@ -51,8 +51,8 @@ msprocessed.full =
 
 ## 2) Build design data
 msddl.full = make.design.data(msprocessed.full,
-                               parameter = list(
-                                 Psi = list(pim.type = "time"),
+                               parameters = list(
+                                 Psi = list(pim.type = "constant"),
                                  S = list(pim.type = "time"),
                                  p = list(pim.type = "time")
                                ))
@@ -60,11 +60,55 @@ msddl.full = make.design.data(msprocessed.full,
 ## 3) Run model
 time.full =
   system.time(
-    msmodel.full = mark(
+    msmodel.full <- mark(
       msprocessed.full,
       msddl.full,
       model.parameters = model.parameters,
-      threads = -1,
+      threads = 4,
       output = FALSE
     )
   )
+
+## Compare parameter estimates
+
+# Survival
+ms.survival <- rbind(data.frame(Data="Truncated",
+                                   x=1:34 -.2,
+                                   msmodel.trunc$results$real[1:34,c(1,3,4)]),
+                        data.frame(Data="Original",
+                                   x=1:34 +.2,
+                                   msmodel.full$results$real[1:34,c(1,3,4)]))
+
+ggplot(ms.survival,aes(x,estimate,group=Data,color=Data)) + 
+  geom_point() +
+  geom_errorbar(aes(ymin=lcl,ymax=ucl)) + 
+  ylim(c(0,1)) +
+  xlab("Occasion") + ylab("Survival Probability")
+
+# Capture
+ms.capture <- rbind(data.frame(Data="Truncated",
+                                x=1:34 -.2,
+                                msmodel.trunc$results$real[35:68,c(1,3,4)]),
+                     data.frame(Data="Original",
+                                x=1:34 +.2,
+                                msmodel.full$results$real[35:68,c(1,3,4)]))
+
+ggplot(ms.capture,aes(x,estimate,group=Data,color=Data)) + 
+  geom_point() +
+  geom_errorbar(aes(ymin=lcl,ymax=ucl)) + 
+  ylim(c(0,1)) +
+  xlab("Occasion") + ylab("Capture Probability")
+
+# Transition
+ms.transition <- rbind(data.frame(Data="Truncated",
+                               x=1:20 -.2,
+                               msmodel.trunc$results$real[69:88,c(1,3,4)]),
+                    data.frame(Data="Original",
+                               x=1:20 +.2,
+                               msmodel.full$results$real[69:88,c(1,3,4)]))
+
+ggplot(ms.transition,aes(x,estimate,group=Data,color=Data)) + 
+  geom_point() +
+  geom_errorbar(aes(ymin=lcl,ymax=ucl)) + 
+  ylim(c(0,1)) +
+  xlab("Parameter") + ylab("Transition Probability")
