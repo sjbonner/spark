@@ -1,4 +1,4 @@
-## Load RMark
+## Load packages
 library(RMark)
 library(ggplot2)
 
@@ -13,16 +13,16 @@ dipper.trunc <- spark(dipper,informat="mark",outformat="mark",k=k)
 dipper.process1 <- process.data(dipper.trunc,
                                 model="CJS",
                                 time.intervals=c(1,.5,1,.75,.25,1),
-                                groups=c("sex"))
+                                groups="sex")
 
 dipper.ddl1 <- make.design.data(dipper.process1)
 
 ## Run MARK
-timeplussex=list(formula=~time+sex)
+timebysex=list(formula=~time*sex)
 
 system.time(dipper.model1 <- mark(dipper.process1,dipper.ddl1,
-                                  model.parameters=list(Phi=timeplussex,
-                                      p=timeplussex)))
+                                  model.parameters=list(Phi=timebysex,
+                                      p=timebysex)))
 
 
 dipper.model1$results$real
@@ -36,8 +36,8 @@ dipper.process2 <- process.data(dipper,
 dipper.ddl2 <- make.design.data(dipper.process2)
                                
 system.time(dipper.model2 <- mark(dipper.process2,dipper.ddl2,
-                                  model.parameters=list(Phi=timeplussex,
-                                      p=timeplussex)))
+                                  model.parameters=list(Phi=timebysex,
+                                      p=timebysex)))
 
 dipper.model2$results$real
 
@@ -62,7 +62,7 @@ survindex = grep("^Phi",rownames(dipper.results))
 ggplot(dipper.results[survindex,],aes(x,estimate,group=Data,color=Data)) + 
   geom_point() +
   geom_errorbar(aes(ymin=lcl,ymax=ucl)) + 
-  facet_grid(~ Sex) +
+  facet_grid(. ~ Sex) +
   ylim(c(0,1)) +
   xlab("Occasion") + ylab("Survival Probability")
 
