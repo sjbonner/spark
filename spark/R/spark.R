@@ -78,26 +78,25 @@
 #' \item release: vector of release times associated with each history in chmat
 #' \item initial: vector of initial times associated with each history in chmat
 #' }
-#' \item \code{marked}: a data frame as used in the functions \link[RMark]{process.data} from both \code{RMark}
+#' \item \code{marked}: a data frame as used in the functions \code{\link[RMark]{process.data}} from both \code{RMark}
 #' and \code{marked}.
-#' \item \code{mark}: an alias for the \code{marked} format.
+#' \item \code{mark}: an alias for the \code{marked} format which adds functionality for reading directly from INP files.
 #' }
 #'
 #' Data may be provided to \code{spark} in either of the above formats. Additionally, \code{spark} can read data
-#' directly from input files for Program MARK using \link{mark2spark}.
+#' directly from input files for Program MARK when using the \code{mark} format.
 #'
 #' @param indata Input data set with complete capture histories. Either \code{indata} or \code{infile} must be specified.
 #'
 #' @param infile Path to file containing input data set with complete capture histories. Either \code{indata} or \code{infile} must be specified.
 #' @param informat Format of input data set. Currently available formats include: mark, marked, and spark, the internal data format. See details for further description.
-#' @param outfile Path to file for writing output data set. If NULL then the modified data will be returned but not written to a file.
 #' @param outformat Format of output data set. Currently available formats include: mark, marked, or spark. See Details for further description.
 #' @param k Truncation limit. See Details for further description.
 #' @param collapse If TRUE then unique histories are identified and counted. This will not work with individual covariates.
 #' @param ... Further parameters passed directly to the data conversion functions.
 #' @param compress If TRUE then the data will be compressed by converting histories from length \eqn{k} to length \eqn{T}.
-#' @param datatype Either "recaptures" for recaptures only data or "livedead" for recaptures and recovery data. 
-#' @param ragged Creates ragged capture histories (see Details). 
+#' @param datatype Either "recaptures" for recaptures only data or "livedead" for recaptures and recovery data.
+#' @param ragged Creates ragged capture histories (see Details).
 #'
 #' @return An output data set in the specified format inlcuding the truncated capture histories.
 #' @export
@@ -112,7 +111,6 @@
 spark = function(indata = NULL,
                  infile = NULL,
                  informat = "spark",
-                 outfile = NULL,
                  outformat = "spark",
                  k = 5,
                  datatype = "recaptures",
@@ -122,17 +120,17 @@ spark = function(indata = NULL,
                  ...) {
   ## Format input data if necessary
   if (informat == "mark")
-    indata = mark2spark(indata, infile,datatype=datatype, ...)
+    indata = mark2spark(indata, infile, datatype = datatype, ...)
   else if (informat == "marked")
     indata = marked2spark(indata, infile, ...)
   else if (informat != "spark")
     stop("Sorry, I do not recognize that informat.\n")
-
+  
   ## Remove histories that do not contribute to likelihood
   first = apply(indata$chmat, 1, function(w)
     min(which(w > 0)))
   invalid = which(first == ncol(indata$chmat))
-
+  
   if (length(invalid) > 0) {
     warning(
       "Removing ",
@@ -141,13 +139,13 @@ spark = function(indata = NULL,
       ncol(indata$chmat),
       ".\n"
     )
-
+    
     indata$chmat = indata$chmat[-invalid,]
     indata$freq = indata$freq[-invalid]
-
+    
     indata$other = indata$other[-invalid, , drop = FALSE]
   }
-
+  
   ## Check value of k
   if (k > (ncol(indata$chmat) - 1)) {
     k = ncol(indata$chmat) - 1
@@ -157,131 +155,37 @@ spark = function(indata = NULL,
       ". This will reproduce the full model with no truncation.\n"
     )
   }
-
+  
   ## Truncate capture histories
-  outdata =
-    truncateCH(indata,
-               k = k,
-               compress = compress,
-               ragged = ragged,
-               collapse = collapse,
-               datatype = datatype)
-
+  if (datatype == "recaptures") {
+    outdata =
+      truncateCHrecaptures(
+        indata,
+        k = k,
+        compress = compress,
+        ragged = ragged,
+        collapse = collapse
+      )
+  }
+  else if (datatype == "livedead") {
+    outdata =
+      truncateCHlivedead(
+        indata,
+        k = k,
+        compress = compress,
+        ragged = ragged,
+        collapse = collapse
+      )
+  }
+  
+  
   ## Format output data if necessary
   if (outformat == "mark")
-    return(spark2mark(outdata, outfile))
+    return(spark2mark(outdata))
   else if (outformat == "marked")
-    return(spark2marked(outdata, outfile))
+    return(spark2marked(outdata))
   else if (outformat != "spark")
     stop("Sorry, I do not recognize that outformat.\n")
   else
     return(outdata)
 }
-
-truncateCH = function(indata,
-                      k = NULL,
-                      compress = FALSE,
-                      ragged = FALSE,
-                      collapse = FALSE,
-                      datatype = "recaptures") {
-  if (is.null(k))
-    stop("You must specify a value for the truncation parameter, k.\n")
-  
-  
-  ## Truncate capture histories
-  if(datatype == "recaptures"){
-  if(compress)
-    chnew.list =
-      apply(indata$chmat,
-            1,
-            truncateCH1recapturescompress,
-            k = k,
-            ragged = ragged)
-  else
-    chnew.list =
-      apply(indata$chmat,
-            1,
-            truncateCH1recaptures,
-            k = k)
-  }
-  else if(datatype == "livedead"){
-    chnew.list =
-      apply(indata$chmat,
-            1,
-            truncateCH1livedead,
-            k = k)
-    
-  }
-  
-  ## Stack new capture histories
-  chmat = do.call("rbind", sapply(chnew.list, "[[", "ch"))
-  
-  ## Extract release and recapture times and initial times
-  release = unlist(sapply(chnew.list, "[[", "release"))
-  recapture = unlist(sapply(chnew.list, "[[", "recapture"))
-  if(compress)
-    initial = unlist(sapply(chnew.list, "[[", "initial"))
-  else
-    initial = rep(1,length(release))
-  
-  ## Create individual mapping vector
-  nrelease = sapply(chnew.list, "[[", "nrelease")
-  ind = rep(1:nrow(indata$chmat), nrelease)
-  
-  ## Add useful rownames
-  if (is.null(rownames(indata$chmat)))
-    rownames(chmat) = paste(ind, release, sep = ".")
-  else
-    rownames(chmat) =
-    paste(rep(rownames(indata$chmat), nrelease), release, sep = ".")
-  
-  ## Create output object
-  if (collapse) {
-    ## Aggregate data if requested
-    if (!is.null(indata$other))
-      stop("Aggregation is not currently supported when extra covariates are supplied.\n")
-    
-    df = data.frame(
-      chmat = chmat,
-      release = release,
-      initial = initial,
-      recapture = recapture,
-      freq = indata$freq[ind],
-      stringsAsFactors = FALSE
-    )
-    
-    vars = c(paste0("chmat.", 0:k + 1), "release", "initial", "recapture")
-    
-    output.tmp = df %>%
-      group_by_(.dots = vars) %>%
-      tally(wt = freq)
-    
-    output = list(
-      chmat = output.tmp[, paste0("chmat.", 0:k + 1)],
-      release = output.tmp$release,
-      initial = output.tmp$initial,
-      recapture = output.tmp$recapture,
-      freq = output.tmp$n,
-      aggregated = TRUE
-    )
-  }
-  else{
-    output = list(
-      chmat = chmat,
-      nrelease = length(release),
-      release = release,
-      initial = initial,
-      recapture = recapture,
-      ind = ind,
-      freq = indata$freq,
-      other = indata$other,
-      aggregated = FALSE
-    )
-  }
-  
-  class(output) = "spark"
-  
-  ## Return output
-  output
-}
-

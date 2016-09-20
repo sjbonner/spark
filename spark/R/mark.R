@@ -8,7 +8,7 @@ mark2spark <-
            covariates = NULL,
            datatype = "recaptures",
            use.comments = FALSE) {
-    ## This function is simply a wrapper around marked2spard that allows for data to be read directly from a MARK .inp file.
+    ## This function is simply a wrapper around marked2spark that allows for data to be read directly from a MARK .inp file.
     
     ## Requires functions from RMark
     if (!requireNamespace("RMark", quietly = TRUE)) {
@@ -24,42 +24,18 @@ mark2spark <-
       indata <-
         RMark::convert.inp(infile, group.df, covariates, use.comments)
       
-      marked2spark(indata,group.df,covariates,data.type,use.comments)
+      marked2spark(indata,group.df,covariates,datatype,use.comments)
   }
 
-spark2mark <- function(truncdata, outfile = NULL) {
-  ## Convert data from spark internal format to RMark data frame
+spark2mark <- function(truncdata) {
+  ## For now just a wrapper
   
   ## Requires functions from RMark
   if (!requireNamespace("RMark", quietly = TRUE)) {
-    stop("RMark needed for this function to work. Please install it.",
+    stop("RMark is needed for this function to work. Please install it.",
          call. = FALSE)
   }
   
-  ## Create data frame by:
-  ## 1) Collapsing histories
-  ## 2) Binding the frequencies, release times, and other variables
-  
-  markdf <-
-    data.frame(
-      ch = RMark::collapseCH(as.matrix(truncdata$chmat)),
-      initial = truncdata$initial,
-      release = truncdata$release,
-      stringsAsFactors = FALSE
-    )
-  
-  if (truncdata$aggregated) {
-    markdf$freq = truncdata$freq
-  }
-  else{
-    markdf$freq = truncdata$freq[truncdata$ind]
-    
-    if (!is.null(truncdata$other)) {
-      markdf$other = truncdata$other[truncdata$ind,]
-      names(markdf)[-(1:4)] = colnames(truncdata$other)
-    }
-  }
-  
-  ## Return data frame
-  markdf
+  ## Format data
+  spark2marked(truncdata)
 }

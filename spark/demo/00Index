@@ -1,5 +1,5 @@
-cjs_demo_dippers_1 Demo Simple demonstration applying CJS model to dippers data.
-cjs_demo_dippers_2 Demo Repeat dippers example using compressed data format and no ragged data.
-cjs_demo_dippers_3 Demo Repeat dippers example using compressed data format and ragged data.
-cts_cov_demo_1000 Demo Application to continuous covariate models in JAGS.
-ms_demo_1000_rmark Demo Application to multistate model via RMark.
+cjs_demo_dippers_1   "Demo Simple demonstration applying CJS model to dippers data."
+cjs_demo_dippers_2   "Demo Repeat dippers example using compressed data format and no ragged data."
+cjs_demo_dippers_3   "Demo Repeat dippers example using compressed data format and ragged data."
+cts_cov_demo_1000   "Demo Application to continuous covariate models in JAGS."
+ms_demo_1000_rmark   "Demo Application to multistate model via RMark."

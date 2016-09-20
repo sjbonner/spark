@@ -7,11 +7,9 @@ marked2spark <-
            datatype = "recaptures",
            use.comments = FALSE) {
     ## Requires functions from marked (preferably) or RMark
-    if (!requireNamespace("marked", quietly = TRUE)) {
-      if (!requireNamespace("RMark", quietly = TRUE)) {
-        stop("Either the marked or RMark package is needed for this function to work. Please install one or the other.",
-             call. = FALSE)
-      }
+    if (!requireNamespace("marked",quietly=TRUE) && !requireNamespace("RMark", quietly = TRUE)) {
+      stop("Either the marked or RMark package is needed for this function to work. Please install one or the other.",
+           call. = FALSE)
     }
     
     ## Load data from infile if necessary
@@ -59,7 +57,41 @@ marked2spark <-
     ))
   }
 
-spark2marked <- function(truncdata, outfile = NULL) {
-  ## This is actually just an alias for spark2mark.
-  spark2mark(truncdata, outfile = NULL)
+spark2marked <- function(truncdata) {
+  ## Convert data from spark internal format to RMark data frame
+  
+  ## Requires functions from RMark
+  if (!requireNamespace("marked",quietly=TRUE) && !requireNamespace("RMark", quietly = TRUE)) {
+    stop("Either the marked or RMark package is needed for this function to work. Please install one or the other.",
+         call. = FALSE)
+  }
+  
+  ## Create data frame by:
+  ## 1) Collapsing histories
+  ## 2) Binding the frequencies, release times, and other variables
+  
+  markdf <-
+    data.frame(
+      ch = collapseCH(as.matrix(truncdata$chmat)),
+      initial = truncdata$initial,
+      release = truncdata$release,
+      stringsAsFactors = FALSE
+    )
+  
+  if (truncdata$aggregated) {
+    markdf$freq = truncdata$freq
+  }
+  else{
+    markdf$freq = truncdata$freq[truncdata$ind]
+    
+    if (!is.null(truncdata$other)) {
+      markdf$other = truncdata$other[truncdata$ind,]
+      names(markdf)[-(1:4)] = colnames(truncdata$other)
+    }
+  }
+  
+  ## Return data frame
+  markdf
 }
+
+

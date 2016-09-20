@@ -4,7 +4,7 @@
 \alias{spark}
 \title{SParsifying mARK-recapture Data}
 \usage{
-spark(indata = NULL, infile = NULL, informat = "spark", outfile = NULL,
+spark(indata = NULL, infile = NULL, informat = "spark",
   outformat = "spark", k = 5, datatype = "recaptures", compress = FALSE,
   ragged = TRUE, collapse = FALSE, ...)
 }
@@ -14,8 +14,6 @@ spark(indata = NULL, infile = NULL, informat = "spark", outfile = NULL,
 \item{infile}{Path to file containing input data set with complete capture histories. Either \code{indata} or \code{infile} must be specified.}
 
 \item{informat}{Format of input data set. Currently available formats include: mark, marked, and spark, the internal data format. See details for further description.}
-
-\item{outfile}{Path to file for writing output data set. If NULL then the modified data will be returned but not written to a file.}
 
 \item{outformat}{Format of output data set. Currently available formats include: mark, marked, or spark. See Details for further description.}
 
@@ -114,13 +112,13 @@ The package currently supports three (well, really two) output data formats:
 \item release: vector of release times associated with each history in chmat
 \item initial: vector of initial times associated with each history in chmat
 }
-\item \code{marked}: a data frame as used in the functions \link[RMark]{process.data} from both \code{RMark}
+\item \code{marked}: a data frame as used in the functions \code{\link[RMark]{process.data}} from both \code{RMark}
 and \code{marked}.
-\item \code{mark}: an alias for the \code{marked} format.
+\item \code{mark}: an alias for the \code{marked} format which adds functionality for reading directly from INP files.
 }
 
 Data may be provided to \code{spark} in either of the above formats. Additionally, \code{spark} can read data
-directly from input files for Program MARK using \link{mark2spark}.
+directly from input files for Program MARK when using the \code{mark} format.
 }
 \examples{
 

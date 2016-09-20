@@ -8,12 +8,17 @@ Description: spark is a tool for speeding the analysis of complex mark-recapture
     the remaining capture history to reduce the compuational burden. Further
     functions are provided to format data for different software packages.
 Depends:
-    R (>= 3.0.0)
+    R (>= 3.0.0),dplyr
 License: GPL-3
 LazyData: true
 Suggests:
     RMark,
+    marked,
     knitr,
-    rmarkdown
+    rmarkdown,
+    rjags,
+    ggplot2,
+    ggmcmc,
+    coda
 RoxygenNote: 5.0.1
 VignetteBuilder: knitr
