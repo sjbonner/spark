@@ -1,0 +1,217 @@
+---
+title: "Continuous Covariate Model"
+author: "Simon Bonner"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+------
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo=FALSE}
+## True parameter values
+T=50
+beta.p=c(0,0)
+beta.phi=c(0,1)
+mu.z=rep(0,T)
+sigma=c(.5,.2)
+
+truth=c(beta.p,beta.phi,mu.z[-1],sigma[-1])
+```
+
+## Introduction
+
+Here we illustrate how spark may be applied speed fitting CJS-based models incorporating continuous, time-varying, individual covariates. Data considered was simulated for a total of $N=1000$ marked individuals over $T=10$ capture occasions. The initial time of capture and marking for each individual, denoted by $a_i$ for the $i^{th}$ individual, was sampled at random from $1,\ldots,9$. Covariate values, denoted by $z_{it}$ for indivdiual $i$ on occasion $t$, for each were generated according to a normal random walk: 
+$$z_{ia_i} \sim N(\mu_0,\sigma^2))$$ $$z_{it} \sim N(z_{i,t-1}+\mu_{t-1},\sigma_1^2), \quad t=a_i+1,\ldots,T.$$ 
+Captures histories were the generated with capture and survival probabilities:
+$$\mathrm{logit}(p_{it})=\beta_0 + \beta_1 z_{it}$$
+$$\mathrm{logit}(\phi_{it})=\gamma_0 + \gamma_1 z_{it}.$$
+For this simulation we have set: $\mu_0=0$, $\mu_t=1/9$ for all $t$, $\sigma_0=.1$, $\sigma_1=.2$ $\beta_0=0$, $\beta_1=0$, $\gamma_0=0$, and $\gamma_1=1$.
+
+## JAGS code
+
+The JAGS source code is installed on your machine at `r system.file("JAGS/cts_cov_jags.R",package="spark")`. The likelihood for this model is difficult to encode with the built in distribution functions and instead is implemented with the ones trick. As with the other models fit with truncation, the data is modeled on a release-by-release basis. The probability associated with the recapture event is computed for each release and then implicity multiplied via a vector of dummy Bernoulli variables all equal to 1. The main data structures in this model are *Z*, the matrix of covariate values, and *drecap*, a vector recording the number of occasions between release and recaptured for each release. If an individual is not recaptured then *drecap* is set equal to the minimum of the truncation factor , $k$ (equal to 5 here), and the number of capture occasions remaining in the study after the release time. The remaining data values are:
+* nocc -- the number of capture occasions,
+* nrelease -- the total number of releases over all indivdiuals,
+* nrecapture -- the total number of releases after which an individual was recaptured, and
+* release -- the vector release times (length nrelease).
+
+## Analysis
+
+### Preliminaries
+```{r,message=FALSE}
+## Load packages
+library(spark)
+library(RMark)
+library(rjags)
+library(coda)
+library(ggmcmc)
+
+## Load data
+data("cts_cov_data")
+```
+
+### Data Formatting
+
+Data formatting for this model is somewhat more complicated because of the use of the ones trick. The likelihood contribution must be computed differently for individuals that were recaptured within $k$ occasions after release and those that weren't. The simplest way to do this is to order the individuals so that the data for the *nrecapture* events on which individuals were recaptured come first. The likelihood can then be computed with two separate for loops that loop first over the events on which individuals were recaptured and then over the events on which individuals were not recaptured. The data is formatted as follows:
+
+First, we truncate the data and compute *drecap*: 
+```{r}
+## Truncate data
+k <- 5
+truncdata <- spark(cts_cov_data,informat="spark",outformat="spark",k=k)
+
+## Construct drecap
+drecap <- ifelse(truncdata$recapture > 0,
+                 truncdata$recapture-truncdata$release,
+                 pmin(k,T-truncdata$release))
+```
+
+Next we construct the matrix of observed covariate values:
+```{r}
+## Format covariate matrix
+Z <- matrix(NA,nrow=truncdata$nrelease,ncol=k+1)
+
+for(i in 1:truncdata$nrelease){
+    Z[i,1] <- truncdata$other[truncdata$ind[i],truncdata$release[i]]
+
+    
+    if(truncdata$recapture[i] > 0)
+        Z[i,drecap[i]+1] <- truncdata$other[truncdata$ind[i],truncdata$recapture[i]]
+}
+```
+
+Finally we reorder the data so that the indivdiuals which were recaptured come first in the data structures: 
+```{r}
+## Order data so that recaptures come first
+tmp <- which(truncdata$recapture > 0)
+index <- c(tmp,(1:truncdata$nrelease)[-tmp])
+nrecapture <- length(tmp)
+
+## Construct data list
+jags.data <- list(nocc=T,
+                  nrecapture=nrecapture,
+                  release=truncdata$release[index],
+                  nrelease=truncdata$nrelease,
+                  drecap=drecap[index],
+                  Z=Z[index,],
+                  dummy=rep(1,nrow(truncdata$chmat)))
+```
+
+### Initial Values
+For simplicity, I have run a single chain with static initial values. Actual analyses should rely on multiple chains with diffuse initial values to assess convergence of the algorithms.  
+```{r}
+## Set intial values
+jags.inits <- list(beta.phi=c(0,0),
+                   beta.p=c(0,0),
+                   mu.z=rep(0,T-1),
+                   tau.z=1)
+```
+
+### MCMC Sampling
+
+```{r}
+## Run model in JAGS
+
+## This is how the model is run via rjags. However, this can take some time and requires JAGS to be installed, so that the vignette will not pass the CRAN check.
+# modelFile <- system.file("JAGS/cts_cov_jags.R",package="spark")
+#  
+# system.time(jagsModel <- jags.model(modelFile,data=jags.data,inits=jags.inits,n.adapt=1000))
+#  
+# pars <- c("beta.phi","beta.p","mu.z","sigma.z")
+# time.trunc <- system.time(coda.trunc <- coda.samples(jagsModel,pars,n.iter=10000))
+
+## Instead, we can load stored output from a previous run.
+load(system.file("extdata","cts_cov_1000_output_trunc.RData",package="spark"))
+```
+
+## Summarize output
+The following table compares the true parameter values with the posterior means, standard deviations, and upper and lower 2.5%-iles estimated from the MCMC chain. Posterior means for all parameters are close to the truth and the central 95% credible intervals all cover the true values. Effective samples sizes (ESS) are also included.
+```{r echo=FALSE}
+## Numerical summaries
+summ.trunc <- summary(coda.trunc)
+
+round(cbind(data.frame(Truth=c(beta.p,beta.phi,mu.z[-1],sigma[-1]),
+                 ESS=effectiveSize(coda.trunc)),
+                 summ.trunc[[1]][,1:2],
+                 summ.trunc[[2]][,c(1,3,5)]),2)
+```
+
+Traceplots for the key parameters, below, show that the chains have converged well and the ESS are sufficient for most parameters, though larger samples from multiple chains would be required in real applications. 
+```{r echo=FALSE}
+## Traceplots
+coda.ggs = ggs(coda.trunc)
+ggs_traceplot(coda.ggs,family="beta")
+```
+
+## Full Data
+For comparison we again run the analysis on the full data set by setting $k=T-1$:
+```{r}
+## Format data to use the same code
+k <- T-1
+fulldata <- spark(cts_cov_data,informat="spark",outformat="spark",k=k)
+
+## Construct drecap
+drecap <- ifelse(truncdata$recapture > 0,
+                 truncdata$recapture-truncdata$release,
+                 pmin(k,T-truncdata$release))
+
+## Format covariate matrix
+Z <- matrix(NA,nrow=truncdata$nrelease,ncol=k+1)
+
+for(i in 1:truncdata$nrelease){
+    Z[i,1] <- truncdata$other[truncdata$ind[i],truncdata$release[i]]
+
+    
+    if(truncdata$recapture[i] > 0)
+        Z[i,drecap[i]+1] <- truncdata$other[truncdata$ind[i],truncdata$recapture[i]]
+}
+
+## Order data so that recaptures come first
+tmp <- which(truncdata$recapture > 0)
+index <- c(tmp,(1:truncdata$nrelease)[-tmp])
+nrecapture <- length(tmp)
+
+## Construct data list
+jags.data <- list(nocc=T,
+                  nrecapture=nrecapture,
+                  release=truncdata$release[index],
+                  nrelease=truncdata$nrelease,
+                  drecap=drecap[index],
+                  Z=Z[index,],
+                  dummy=rep(1,nrow(truncdata$chmat)))
+
+## Set intial values
+jags.inits <- list(beta.phi=c(0,0),
+                   beta.p=c(0,0),
+                   mu.z=rep(0,9),
+                   tau.z=1)
+
+## Run model in JAGS
+
+## This is how the model is run via rjags. However, this can take some time and requires JAGS to be installed, so that the vignette will not pass the CRAN check.
+# modelFile <- system.file("JAGS/cts_cov_jags.R",package="spark")
+# 
+# system.time(jagsModel <- jags.model(modelFile,data=jags.data,inits=jags.inits,n.adapt=1000))
+# 
+# pars <- c("beta.phi","beta.p","mu.z","sigma.z")
+# time.full <- system.time(coda.full <- coda.samples(jagsModel,pars,n.iter=10000))
+ 
+## Instead, we can load stored output from a previous run.
+load(system.file("extdata","cts_cov_1000_output_full.RData",package="spark"))
+
+## Numerical summaries
+summ.full <- summary(coda.full)
+
+round(cbind(data.frame(Truth=c(beta.p,beta.phi,mu.z[-1],sigma[-1]),
+                 ESS=effectiveSize(coda.full)),
+                 summ.full[[1]][,1:2],
+                 summ.full[[2]][,c(1,3,5)]),2)
+```
+
+Comparing results, the estimated posterior standard deviations computed from the truncated data were, on average, `r round(mean(summ.trunc[[1]][,"SD"]/summ.full[[1]][,"SD"]),2)` times as large as those computed from the full data set. The runtime for the truncated data was `r round(time.trunc[1])` seconds in comparison to `r round(time.full[1])` seconds for the full data set, a speed up of `r round(time.full[1]/time.trunc[1],2)` times. 

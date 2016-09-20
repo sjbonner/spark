@@ -6,6 +6,7 @@ mark2spark <-
            infile = NULL,
            group.df = NULL,
            covariates = NULL,
+           datatype = "recaptures",
            use.comments = FALSE) {
     ## Requires functions from RMark
     if (!requireNamespace("RMark", quietly = TRUE)) {
@@ -25,7 +26,18 @@ mark2spark <-
     
     ## Separate input data into (possibly) three components
     ## 1) Matrix of capture histories
-    chmat <- RMark::splitCH(indata$ch)
+    if (datatype == "livedead") {
+      chmat <- t(sapply(indata$ch,function(h) {
+        matrix(as.numeric(strsplit(h,"")[[1]]),ncol = 2,byrow = TRUE) %*% c(1,2)
+      }))
+    }
+    else if(datatype == "recaptures"){
+      # We can use RMark's built-in function to split the capture histories
+      chmat <- RMark::splitCH(indata$ch)
+    }
+    else{
+      stop("Unknown data type:",datatype,"\n")
+    }
     
     ## 2) Frequencies
     if (is.null(indata$freq))
@@ -45,7 +57,8 @@ mark2spark <-
     return(list(
       chmat = chmat,
       freq = freq,
-      other = other
+      other = other,
+      datatype = datatype
     ))
   }
 
@@ -65,28 +78,22 @@ spark2mark <- function(truncdata, outfile = NULL) {
   markdf <-
     data.frame(
       ch = RMark::collapseCH(as.matrix(truncdata$chmat)),
-      truncdata$release,
-      truncdata$initial,
+      initial = truncdata$initial,
+      release = truncdata$release,
       stringsAsFactors = FALSE
     )
   
-  markdfnames = c("ch","release","initial","freq")
-  
-  if (truncdata$aggregated){
+  if (truncdata$aggregated) {
     markdf$freq = truncdata$freq
   }
   else{
     markdf$freq = truncdata$freq[truncdata$ind]
     
     if (!is.null(truncdata$other)) {
-      markdf$other = truncdata$other[truncdata$ind, ]
-      markdfnames = c(markdfnames,colnames(truncdata$other))
+      markdf$other = truncdata$other[truncdata$ind,]
+      names(markdf)[-(1:4)] = colnames(truncdata$other)
     }
   }
-  
-  ## Add column names
-  # browser()
-  colnames(markdf) = markdfnames
   
   ## Return data frame
   markdf
