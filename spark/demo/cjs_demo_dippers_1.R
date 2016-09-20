@@ -7,7 +7,7 @@ data(dipper)
 
 ## Run spark
 k <- 3
-dipper.trunc <- spark(dipper,informat="mark",outformat="mark",k=k)
+dipper.trunc <- spark(dipper,informat="marked",outformat="mark",k=k)
 
 ## Process data
 dipper.process1 <- process.data(dipper.trunc,
