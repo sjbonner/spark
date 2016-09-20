@@ -8,6 +8,8 @@ mark2spark <-
            covariates = NULL,
            datatype = "recaptures",
            use.comments = FALSE) {
+    ## This function is simply a wrapper around marked2spard that allows for data to be read directly from a MARK .inp file.
+    
     ## Requires functions from RMark
     if (!requireNamespace("RMark", quietly = TRUE)) {
       stop("RMark is needed for this function to work. Please install it.",
@@ -15,51 +17,14 @@ mark2spark <-
     }
     
     ## Load data from infile if necessary
-    if (is.null(indata)) {
-      if (is.null(infile))
-        stop("You must provide either the data or the name of an input file.\n")
+     if (is.null(infile))
+        stop("You must provide the name of an input file.\n")
       
       ## Load data using convert.inp from RMark
       indata <-
         RMark::convert.inp(infile, group.df, covariates, use.comments)
-    }
-    
-    ## Separate input data into (possibly) three components
-    ## 1) Matrix of capture histories
-    if (datatype == "livedead") {
-      chmat <- t(sapply(indata$ch,function(h) {
-        matrix(as.numeric(strsplit(h,"")[[1]]),ncol = 2,byrow = TRUE) %*% c(1,2)
-      }))
-    }
-    else if(datatype == "recaptures"){
-      # We can use RMark's built-in function to split the capture histories
-      chmat <- RMark::splitCH(indata$ch)
-    }
-    else{
-      stop("Unknown data type:",datatype,"\n")
-    }
-    
-    ## 2) Frequencies
-    if (is.null(indata$freq))
-      freq <- rep(1, nrow(indata))
-    else
-      freq <- indata$freq
-    
-    ## 3) Other columns
-    othernames <- setdiff(colnames(indata), c("ch", "freq"))
-    
-    if (length(othernames) > 0)
-      other <- indata[, othernames, drop = FALSE]
-    else
-      other <- NULL
-    
-    ## Return spark input data list
-    return(list(
-      chmat = chmat,
-      freq = freq,
-      other = other,
-      datatype = datatype
-    ))
+      
+      marked2spark(indata,group.df,covariates,data.type,use.comments)
   }
 
 spark2mark <- function(truncdata, outfile = NULL) {
