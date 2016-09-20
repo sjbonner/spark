@@ -39,47 +39,8 @@ marked2spark <- function(indata=NULL,infile=NULL,group.df=NULL,covariates=NULL,u
 }
 
 spark2marked <- function(truncdata,outfile=NULL){
-    ## Convert data from spark internal format to a marked data frame
-
-    ## Requires functions from RMark
-    if (!requireNamespace("RMark", quietly = TRUE)) {
-        stop("RMark is needed for this function to work. Please install it.",call. = FALSE)
-    }
-
-    ## Create data frame by:
-    ## 1) Collapsing histories
-    ## 2) Binding the frequencies, release times, and other variables
-
-  markeddf <-
-    data.frame(
-      ch = RMark::collapseCH(as.matrix(truncdata$chmat)),
-      truncdata$release,
-      truncdata$initial,
-      stringsAsFactors = FALSE
-    )
-
-  if (truncdata$aggregated)
-    markeddf$freq = truncdata$freq
-  else{
-    markeddf$freq = truncdata$freq[truncdata$ind]
-
-    if (is.null(truncdata$other)) {
-      markeddf$freq = truncdata$other[truncdata$ind, ]
-    }
-  }
-
-  ## Add column names
-  colnames(markeddf) <- c("ch",
-                        "release",
-                        "initial",
-                        "freq",
-                        colnames(truncdata$other))
-
-  ## Return data frame
-  markeddf
+  ## This is actually just an alias for spark2mark.
+  spark2mark(truncdata,outfile=NULL)
 }
-
-
-
 
 

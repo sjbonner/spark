@@ -16,6 +16,7 @@ drecap <- ifelse(truncdata$recapture > 0,
 
 ## Format covariate matrix
 Z <- matrix(NA,nrow=truncdata$nrelease,ncol=k+1)
+
 for(i in 1:truncdata$nrelease){
     Z[i,1] <- truncdata$other[truncdata$ind[i],truncdata$release[i]]
 
@@ -38,6 +39,7 @@ jags.data <- list(nocc=10,
                   Z=Z[index,],
                   dummy=rep(1,nrow(truncdata$chmat)))
 
+## Set intial values
 jags.inits <- list(beta.phi=c(0,0),
                    beta.p=c(0,0),
                    mu.z=rep(0,9),

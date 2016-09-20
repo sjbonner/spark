@@ -2,7 +2,7 @@
 library(RMark)
 library(ggplot2)
 
-## Load data set
+## Set path to data set
 infile = system.file("extdata", "msdata1000.inp", package = "spark")
 
 ## Run spark
@@ -79,9 +79,9 @@ ms.survival <- rbind(data.frame(Data="Truncated",
                                    x=1:34 +.2,
                                    msmodel.full$results$real[1:34,c(1,3,4)]))
 
-ggplot(ms.survival,aes(x,estimate,group=Data,color=Data)) + 
+ggplot(ms.survival,aes(x,estimate,group=Data,color=Data)) +
   geom_point() +
-  geom_errorbar(aes(ymin=lcl,ymax=ucl)) + 
+  geom_errorbar(aes(ymin=lcl,ymax=ucl)) +
   ylim(c(0,1)) +
   xlab("Occasion") + ylab("Survival Probability")
 
@@ -93,9 +93,9 @@ ms.capture <- rbind(data.frame(Data="Truncated",
                                 x=1:34 +.2,
                                 msmodel.full$results$real[35:68,c(1,3,4)]))
 
-ggplot(ms.capture,aes(x,estimate,group=Data,color=Data)) + 
+ggplot(ms.capture,aes(x,estimate,group=Data,color=Data)) +
   geom_point() +
-  geom_errorbar(aes(ymin=lcl,ymax=ucl)) + 
+  geom_errorbar(aes(ymin=lcl,ymax=ucl)) +
   ylim(c(0,1)) +
   xlab("Occasion") + ylab("Capture Probability")
 
@@ -107,8 +107,8 @@ ms.transition <- rbind(data.frame(Data="Truncated",
                                x=1:20 +.2,
                                msmodel.full$results$real[69:88,c(1,3,4)]))
 
-ggplot(ms.transition,aes(x,estimate,group=Data,color=Data)) + 
+ggplot(ms.transition,aes(x,estimate,group=Data,color=Data)) +
   geom_point() +
-  geom_errorbar(aes(ymin=lcl,ymax=ucl)) + 
+  geom_errorbar(aes(ymin=lcl,ymax=ucl)) +
   ylim(c(0,1)) +
   xlab("Parameter") + ylab("Transition Probability")
