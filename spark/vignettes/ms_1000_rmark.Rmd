@@ -19,7 +19,7 @@ knitr::opts_chunk$set(echo = TRUE)
 Here I compare the runtime and inference for a simple multistate model fit in Program MARK via RMark. The data for this is example was simulated from a multistate model with 35 capture occasions and 5 states. The data generating model incporated time dependent capture and survival probabilities and state specific transition probabilities, and included a total of 88 parametes. The same model was used in the analysis and was fit first to the full data set without truncation and to the truncated data set using the default truncation factor, $k=5$. 
 
 ## Preliminaries
-```{r.message=FALSE}
+```{r message=FALSE}
 ## Load packages
 library(spark)
 library(RMark)
