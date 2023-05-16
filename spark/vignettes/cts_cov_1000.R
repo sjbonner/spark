@@ -1,7 +1,7 @@
-## ----setup, include=FALSE------------------------------------------------
+## ----setup, include=FALSE-----------------------------------------------------
 knitr::opts_chunk$set(echo = TRUE)
 
-## ----echo=FALSE----------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
 ## True parameter values
 T=50
 beta.p=c(0,0)
@@ -11,7 +11,7 @@ sigma=c(.5,.2)
 
 truth=c(beta.p,beta.phi,mu.z[-1],sigma[-1])
 
-## ----message=FALSE-------------------------------------------------------
+## ----message=FALSE------------------------------------------------------------
 ## Load packages
 library(spark)
 library(RMark)
@@ -22,7 +22,7 @@ library(ggmcmc)
 ## Load data
 data("cts_cov_data")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ## Truncate data
 k <- 5
 truncdata <- spark(cts_cov_data,informat="spark",outformat="spark",k=k)
@@ -32,7 +32,7 @@ drecap <- ifelse(truncdata$recapture > 0,
                  truncdata$recapture-truncdata$release,
                  pmin(k,T-truncdata$release))
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ## Format covariate matrix
 Z <- matrix(NA,nrow=truncdata$nrelease,ncol=k+1)
 
@@ -44,7 +44,7 @@ for(i in 1:truncdata$nrelease){
         Z[i,drecap[i]+1] <- truncdata$other[truncdata$ind[i],truncdata$recapture[i]]
 }
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ## Order data so that recaptures come first
 tmp <- which(truncdata$recapture > 0)
 index <- c(tmp,(1:truncdata$nrelease)[-tmp])
@@ -59,14 +59,14 @@ jags.data <- list(nocc=T,
                   Z=Z[index,],
                   dummy=rep(1,nrow(truncdata$chmat)))
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ## Set intial values
 jags.inits <- list(beta.phi=c(0,0),
                    beta.p=c(0,0),
                    mu.z=rep(0,T-1),
                    tau.z=1)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ## Run model in JAGS
 
 ## This is how the model is run via rjags. However, this can take some time and requires JAGS to be installed, so that the vignette will not pass the CRAN check.
@@ -80,7 +80,7 @@ jags.inits <- list(beta.phi=c(0,0),
 ## Instead, we can load stored output from a previous run.
 load(system.file("extdata","cts_cov_1000_output_trunc.RData",package="spark"))
 
-## ----echo=FALSE----------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
 ## Numerical summaries
 summ.trunc <- summary(coda.trunc)
 
@@ -89,12 +89,12 @@ round(cbind(data.frame(Truth=c(beta.p,beta.phi,mu.z[-1],sigma[-1]),
                  summ.trunc[[1]][,1:2],
                  summ.trunc[[2]][,c(1,3,5)]),2)
 
-## ----echo=FALSE----------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
 ## Traceplots
 coda.ggs = ggs(coda.trunc)
 ggs_traceplot(coda.ggs,family="beta")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ## Format data to use the same code
 k <- T-1
 fulldata <- spark(cts_cov_data,informat="spark",outformat="spark",k=k)

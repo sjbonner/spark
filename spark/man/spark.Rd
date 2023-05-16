@@ -4,9 +4,18 @@
 \alias{spark}
 \title{SParsifying mARK-recapture Data}
 \usage{
-spark(indata = NULL, infile = NULL, informat = "spark",
-  outformat = "spark", k = 5, datatype = "recaptures", compress = FALSE,
-  ragged = TRUE, collapse = FALSE, ...)
+spark(
+  indata = NULL,
+  infile = NULL,
+  informat = "spark",
+  outformat = "spark",
+  k = 5,
+  datatype = "recaptures",
+  compress = FALSE,
+  ragged = TRUE,
+  collapse = FALSE,
+  ...
+)
 }
 \arguments{
 \item{indata}{Input data set with complete capture histories. Either \code{indata} or \code{infile} must be specified.}
@@ -127,4 +136,3 @@ library(RMark)
 data(dipper)
 dipper.trunc = spark(dipper,informat="marked",outformat="marked",k=3)
 }
-

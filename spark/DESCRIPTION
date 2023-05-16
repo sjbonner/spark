@@ -20,5 +20,5 @@ Suggests:
     ggplot2,
     ggmcmc,
     coda
-RoxygenNote: 5.0.1
+RoxygenNote: 7.2.3
 VignetteBuilder: knitr

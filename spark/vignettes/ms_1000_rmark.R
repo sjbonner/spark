@@ -1,7 +1,7 @@
-## ----setup, include=FALSE------------------------------------------------
+## ----setup, include=FALSE-----------------------------------------------------
 knitr::opts_chunk$set(echo = TRUE)
 
-## ----.message=FALSE------------------------------------------------------
+## ----message=FALSE------------------------------------------------------------
 ## Load packages
 library(spark)
 library(RMark)
@@ -10,7 +10,7 @@ library(ggplot2)
 ## Set path to data set
 infile = system.file("extdata", "msdata1000.inp", package = "spark")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ## 1) Process data
 msprocessed.full =
   process.data(RMark::convert.inp(infile), model = "Multistrata")
@@ -45,7 +45,7 @@ model.parameters = list(
 ## Instead, we can load stored output from a previous run.
 load(system.file("extdata","msdata1000_output_full.RData",package="spark"))
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ## Run spark
 msdata = spark(infile = infile,
                 informat = "mark",
@@ -85,7 +85,7 @@ msddl.trunc = make.design.data(msprocessed.trunc,
 load(system.file("extdata","msdata1000_output_trunc.RData",package="spark"))
 
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE--------------------------------------------------------------
 ms.survival <- rbind(data.frame(Data="Truncated",
                                    x=1:34 -.2,
                                    msmodel.trunc$results$real[1:34,c(1,3,4)]),
@@ -101,7 +101,7 @@ ggplot(ms.survival,aes(x,estimate,group=Data,color=Data)) +
   ylim(c(0,1)) +
   xlab("Occasion") + ylab("Survival Probability")
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE--------------------------------------------------------------
 ms.capture <- rbind(data.frame(Data="Truncated",
                                 x=1:34 -.2,
                                 msmodel.trunc$results$real[35:68,c(1,3,4)]),
@@ -117,7 +117,7 @@ ggplot(ms.capture,aes(x,estimate,group=Data,color=Data)) +
   ylim(c(0,1)) +
   xlab("Occasion") + ylab("Capture Probability")
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE--------------------------------------------------------------
 ms.transition <- rbind(data.frame(Data="Truncated",
                                x=1:20 -.2,
                                msmodel.trunc$results$real[69:88,c(1,3,4)]),

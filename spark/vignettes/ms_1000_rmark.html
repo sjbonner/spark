@@ -1,47 +1,335 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 
 <head>
 
-<meta charset="utf-8">
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta charset="utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 
 <meta name="author" content="Simon Bonner" />
 
-<meta name="date" content="2016-09-20" />
+<meta name="date" content="2023-05-16" />
 
 <title>Multistate Model</title>
 
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
 
-
-<style type="text/css">code{white-space: pre;}</style>
 <style type="text/css">
-table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
-  margin: 0; padding: 0; vertical-align: baseline; border: none; }
-table.sourceCode { width: 100%; line-height: 100%; }
-td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
-td.sourceCode { padding-left: 5px; }
-code > span.kw { color: #007020; font-weight: bold; }
-code > span.dt { color: #902000; }
-code > span.dv { color: #40a070; }
-code > span.bn { color: #40a070; }
-code > span.fl { color: #40a070; }
-code > span.ch { color: #4070a0; }
-code > span.st { color: #4070a0; }
-code > span.co { color: #60a0b0; font-style: italic; }
-code > span.ot { color: #007020; }
-code > span.al { color: #ff0000; font-weight: bold; }
-code > span.fu { color: #06287e; }
-code > span.er { color: #ff0000; font-weight: bold; }
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
 </style>
 
 
 
-<link href="data:text/css,body%20%7B%0A%20%20background%2Dcolor%3A%20%23fff%3B%0A%20%20margin%3A%201em%20auto%3B%0A%20%20max%2Dwidth%3A%20700px%3B%0A%20%20overflow%3A%20visible%3B%0A%20%20padding%2Dleft%3A%202em%3B%0A%20%20padding%2Dright%3A%202em%3B%0A%20%20font%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0A%20%20font%2Dsize%3A%2014px%3B%0A%20%20line%2Dheight%3A%201%2E35%3B%0A%7D%0A%0A%23header%20%7B%0A%20%20text%2Dalign%3A%20center%3B%0A%7D%0A%0A%23TOC%20%7B%0A%20%20clear%3A%20both%3B%0A%20%20margin%3A%200%200%2010px%2010px%3B%0A%20%20padding%3A%204px%3B%0A%20%20width%3A%20400px%3B%0A%20%20border%3A%201px%20solid%20%23CCCCCC%3B%0A%20%20border%2Dradius%3A%205px%3B%0A%0A%20%20background%2Dcolor%3A%20%23f6f6f6%3B%0A%20%20font%2Dsize%3A%2013px%3B%0A%20%20line%2Dheight%3A%201%2E3%3B%0A%7D%0A%20%20%23TOC%20%2Etoctitle%20%7B%0A%20%20%20%20font%2Dweight%3A%20bold%3B%0A%20%20%20%20font%2Dsize%3A%2015px%3B%0A%20%20%20%20margin%2Dleft%3A%205px%3B%0A%20%20%7D%0A%0A%20%20%23TOC%20ul%20%7B%0A%20%20%20%20padding%2Dleft%3A%2040px%3B%0A%20%20%20%20margin%2Dleft%3A%20%2D1%2E5em%3B%0A%20%20%20%20margin%2Dtop%3A%205px%3B%0A%20%20%20%20margin%2Dbottom%3A%205px%3B%0A%20%20%7D%0A%20%20%23TOC%20ul%20ul%20%7B%0A%20%20%20%20margin%2Dleft%3A%20%2D2em%3B%0A%20%20%7D%0A%20%20%23TOC%20li%20%7B%0A%20%20%20%20line%2Dheight%3A%2016px%3B%0A%20%20%7D%0A%0Atable%20%7B%0A%20%20margin%3A%201em%20auto%3B%0A%20%20border%2Dwidth%3A%201px%3B%0A%20%20border%2Dcolor%3A%20%23DDDDDD%3B%0A%20%20border%2Dstyle%3A%20outset%3B%0A%20%20border%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0A%20%20border%2Dwidth%3A%202px%3B%0A%20%20padding%3A%205px%3B%0A%20%20border%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0A%20%20border%2Dwidth%3A%201px%3B%0A%20%20border%2Dstyle%3A%20inset%3B%0A%20%20line%2Dheight%3A%2018px%3B%0A%20%20padding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0A%20%20border%2Dleft%2Dstyle%3A%20none%3B%0A%20%20border%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0A%20%20background%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0A%0Ap%20%7B%0A%20%20margin%3A%200%2E5em%200%3B%0A%7D%0A%0Ablockquote%20%7B%0A%20%20background%2Dcolor%3A%20%23f6f6f6%3B%0A%20%20padding%3A%200%2E25em%200%2E75em%3B%0A%7D%0A%0Ahr%20%7B%0A%20%20border%2Dstyle%3A%20solid%3B%0A%20%20border%3A%20none%3B%0A%20%20border%2Dtop%3A%201px%20solid%20%23777%3B%0A%20%20margin%3A%2028px%200%3B%0A%7D%0A%0Adl%20%7B%0A%20%20margin%2Dleft%3A%200%3B%0A%7D%0A%20%20dl%20dd%20%7B%0A%20%20%20%20margin%2Dbottom%3A%2013px%3B%0A%20%20%20%20margin%2Dleft%3A%2013px%3B%0A%20%20%7D%0A%20%20dl%20dt%20%7B%0A%20%20%20%20font%2Dweight%3A%20bold%3B%0A%20%20%7D%0A%0Aul%20%7B%0A%20%20margin%2Dtop%3A%200%3B%0A%7D%0A%20%20ul%20li%20%7B%0A%20%20%20%20list%2Dstyle%3A%20circle%20outside%3B%0A%20%20%7D%0A%20%20ul%20ul%20%7B%0A%20%20%20%20margin%2Dbottom%3A%200%3B%0A%20%20%7D%0A%0Apre%2C%20code%20%7B%0A%20%20background%2Dcolor%3A%20%23f7f7f7%3B%0A%20%20border%2Dradius%3A%203px%3B%0A%20%20color%3A%20%23333%3B%0A%20%20white%2Dspace%3A%20pre%2Dwrap%3B%20%20%20%20%2F%2A%20Wrap%20long%20lines%20%2A%2F%0A%7D%0Apre%20%7B%0A%20%20border%2Dradius%3A%203px%3B%0A%20%20margin%3A%205px%200px%2010px%200px%3B%0A%20%20padding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0A%20%20background%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0A%0Acode%20%7B%0A%20%20font%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0A%20%20font%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0A%20%20padding%3A%202px%200px%3B%0A%7D%0A%0Adiv%2Efigure%20%7B%0A%20%20text%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0A%20%20background%2Dcolor%3A%20%23FFFFFF%3B%0A%20%20padding%3A%202px%3B%0A%20%20border%3A%201px%20solid%20%23DDDDDD%3B%0A%20%20border%2Dradius%3A%203px%3B%0A%20%20border%3A%201px%20solid%20%23CCCCCC%3B%0A%20%20margin%3A%200%205px%3B%0A%7D%0A%0Ah1%20%7B%0A%20%20margin%2Dtop%3A%200%3B%0A%20%20font%2Dsize%3A%2035px%3B%0A%20%20line%2Dheight%3A%2040px%3B%0A%7D%0A%0Ah2%20%7B%0A%20%20border%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0A%20%20padding%2Dtop%3A%2010px%3B%0A%20%20padding%2Dbottom%3A%202px%3B%0A%20%20font%2Dsize%3A%20145%25%3B%0A%7D%0A%0Ah3%20%7B%0A%20%20border%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0A%20%20padding%2Dtop%3A%2010px%3B%0A%20%20font%2Dsize%3A%20120%25%3B%0A%7D%0A%0Ah4%20%7B%0A%20%20border%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0A%20%20margin%2Dleft%3A%208px%3B%0A%20%20font%2Dsize%3A%20105%25%3B%0A%7D%0A%0Ah5%2C%20h6%20%7B%0A%20%20border%2Dbottom%3A%201px%20solid%20%23ccc%3B%0A%20%20font%2Dsize%3A%20105%25%3B%0A%7D%0A%0Aa%20%7B%0A%20%20color%3A%20%230033dd%3B%0A%20%20text%2Ddecoration%3A%20none%3B%0A%7D%0A%20%20a%3Ahover%20%7B%0A%20%20%20%20color%3A%20%236666ff%3B%20%7D%0A%20%20a%3Avisited%20%7B%0A%20%20%20%20color%3A%20%23800080%3B%20%7D%0A%20%20a%3Avisited%3Ahover%20%7B%0A%20%20%20%20color%3A%20%23BB00BB%3B%20%7D%0A%20%20a%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0A%20%20%20%20text%2Ddecoration%3A%20underline%3B%20%7D%0A%20%20a%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0A%20%20%20%20text%2Ddecoration%3A%20underline%3B%20%7D%0A%0A%2F%2A%20Class%20described%20in%20https%3A%2F%2Fbenjeffrey%2Ecom%2Fposts%2Fpandoc%2Dsyntax%2Dhighlighting%2Dcss%0A%20%20%20Colours%20from%20https%3A%2F%2Fgist%2Egithub%2Ecom%2Frobsimmons%2F1172277%20%2A%2F%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%2F%2A%20Keyword%20%2A%2F%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%2F%2A%20DataType%20%2A%2F%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%2F%2A%20DecVal%20%28decimal%20values%29%20%2A%2F%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%2F%2A%20BaseN%20%2A%2F%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%2F%2A%20Float%20%2A%2F%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%2F%2A%20Char%20%2A%2F%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%2F%2A%20String%20%2A%2F%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%2F%2A%20Comment%20%2A%2F%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%2F%2A%20OtherToken%20%2A%2F%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%2F%2A%20AlertToken%20%2A%2F%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%2F%2A%20Function%20calls%20%2A%2F%20%0Acode%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%2F%2A%20ErrorTok%20%2A%2F%0A%0A" rel="stylesheet" type="text/css" />
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
 
 </head>
 
@@ -51,128 +339,151 @@ code > span.er { color: #ff0000; font-weight: bold; }
 
 
 <h1 class="title toc-ignore">Multistate Model</h1>
-<h4 class="author"><em>Simon Bonner</em></h4>
-<h4 class="date"><em>2016-09-20</em></h4>
+<h4 class="author">Simon Bonner</h4>
+<h4 class="date">2023-05-16</h4>
 
 
 
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
-<p>Here I compare the runtime and inference for a simple multistate model fit in Program MARK via RMark. The data for this is example was simulated from a multistate model with 35 capture occasions and 5 states. The data generating model incporated time dependent capture and survival probabilities and state specific transition probabilities, and included a total of 88 parametes. The same model was used in the analysis and was fit first to the full data set without truncation and to the truncated data set using the default truncation factor, <span class="math">\(k=5\)</span>.</p>
+<p>Here I compare the runtime and inference for a simple multistate
+model fit in Program MARK via RMark. The data for this is example was
+simulated from a multistate model with 35 capture occasions and 5
+states. The data generating model incporated time dependent capture and
+survival probabilities and state specific transition probabilities, and
+included a total of 88 parametes. The same model was used in the
+analysis and was fit first to the full data set without truncation and
+to the truncated data set using the default truncation factor, <span class="math inline">\(k=5\)</span>.</p>
 </div>
 <div id="preliminaries" class="section level2">
 <h2>Preliminaries</h2>
-<pre class="sourceCode r"><code class="sourceCode r">## Load packages
-<span class="kw">library</span>(spark)
-<span class="kw">library</span>(RMark)
-<span class="kw">library</span>(ggplot2)
-
-## Set path to data set
-infile =<span class="st"> </span><span class="kw">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;msdata1000.inp&quot;</span>, <span class="dt">package =</span> <span class="st">&quot;spark&quot;</span>)</code></pre>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Load packages</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(spark)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(RMark)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="do">## Set path to data set</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>infile <span class="ot">=</span> <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;msdata1000.inp&quot;</span>, <span class="at">package =</span> <span class="st">&quot;spark&quot;</span>)</span></code></pre></div>
 </div>
 <div id="run-1-full-data" class="section level2">
 <h2>Run 1: Full Data</h2>
 <p>I first fit the model using the full data set.</p>
-<pre class="sourceCode r"><code class="sourceCode r">## 1) Process data
-msprocessed.full =
-<span class="st">  </span><span class="kw">process.data</span>(RMark::<span class="kw">convert.inp</span>(infile), <span class="dt">model =</span> <span class="st">&quot;Multistrata&quot;</span>)
-
-## 2) Build design data
-msddl.full =<span class="st"> </span><span class="kw">make.design.data</span>(msprocessed.full,
-                               <span class="dt">parameters =</span> <span class="kw">list</span>(
-                                 <span class="dt">Psi =</span> <span class="kw">list</span>(<span class="dt">pim.type =</span> <span class="st">&quot;constant&quot;</span>),
-                                 <span class="dt">S =</span> <span class="kw">list</span>(<span class="dt">pim.type =</span> <span class="st">&quot;time&quot;</span>),
-                                 <span class="dt">p =</span> <span class="kw">list</span>(<span class="dt">pim.type =</span> <span class="st">&quot;time&quot;</span>)
-                               ))
-
-## 3) Run model
-model.parameters =<span class="st"> </span><span class="kw">list</span>(
-  <span class="dt">S =</span> <span class="kw">list</span>(<span class="dt">formula =</span>  ~<span class="st"> </span>time),
-  <span class="dt">p =</span> <span class="kw">list</span>(<span class="dt">formula =</span>  ~<span class="st"> </span>time),
-  <span class="dt">Psi =</span> <span class="kw">list</span>(<span class="dt">formula =</span>  ~<span class="st"> </span>stratum:tostratum -<span class="st"> </span><span class="dv">1</span>)
-)
-
-## This is how the model is run via RMark. However, this can take some time and requires Program MARK to be installed, so that the vignette will not pass the CRAN check. 
-<span class="co"># time.full =</span>
-<span class="co">#   system.time(</span>
-<span class="co">#     msmodel.full &lt;- mark(</span>
-<span class="co">#       msprocessed.full,</span>
-<span class="co">#       msddl.full,</span>
-<span class="co">#       model.parameters = model.parameters,</span>
-<span class="co">#       threads = 4,</span>
-<span class="co">#       output = FALSE</span>
-<span class="co">#     )</span>
-<span class="co">#   )</span>
-
-## Instead, we can load stored output from a previous run.
-<span class="kw">load</span>(<span class="kw">system.file</span>(<span class="st">&quot;extdata&quot;</span>,<span class="st">&quot;msdata1000_output_full.RData&quot;</span>,<span class="dt">package=</span><span class="st">&quot;spark&quot;</span>))</code></pre>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="do">## 1) Process data</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>msprocessed.full <span class="ot">=</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">process.data</span>(RMark<span class="sc">::</span><span class="fu">convert.inp</span>(infile), <span class="at">model =</span> <span class="st">&quot;Multistrata&quot;</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="do">## 2) Build design data</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>msddl.full <span class="ot">=</span> <span class="fu">make.design.data</span>(msprocessed.full,</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>                               <span class="at">parameters =</span> <span class="fu">list</span>(</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">Psi =</span> <span class="fu">list</span>(<span class="at">pim.type =</span> <span class="st">&quot;constant&quot;</span>),</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">S =</span> <span class="fu">list</span>(<span class="at">pim.type =</span> <span class="st">&quot;time&quot;</span>),</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">p =</span> <span class="fu">list</span>(<span class="at">pim.type =</span> <span class="st">&quot;time&quot;</span>)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>                               ))</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="do">## 3) Run model</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>model.parameters <span class="ot">=</span> <span class="fu">list</span>(</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">S =</span> <span class="fu">list</span>(<span class="at">formula =</span>  <span class="sc">~</span> time),</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">p =</span> <span class="fu">list</span>(<span class="at">formula =</span>  <span class="sc">~</span> time),</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">Psi =</span> <span class="fu">list</span>(<span class="at">formula =</span>  <span class="sc">~</span> stratum<span class="sc">:</span>tostratum <span class="sc">-</span> <span class="dv">1</span>)</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="do">## This is how the model is run via RMark. However, this can take some time and requires Program MARK to be installed, so that the vignette will not pass the CRAN check. </span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="co"># time.full =</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="co">#   system.time(</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="co">#     msmodel.full &lt;- mark(</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="co">#       msprocessed.full,</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="co">#       msddl.full,</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="co">#       model.parameters = model.parameters,</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="co">#       threads = 4,</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="co">#       output = FALSE</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="co">#     )</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="co">#   )</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="do">## Instead, we can load stored output from a previous run.</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(<span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>,<span class="st">&quot;msdata1000_output_full.RData&quot;</span>,<span class="at">package=</span><span class="st">&quot;spark&quot;</span>))</span></code></pre></div>
 </div>
 <div id="run-2-truncated-data" class="section level2">
 <h2>Run 2: Truncated Data</h2>
-<p>I now repeat the analysis with truncated data using the default truncation factor, <span class="math">\(k=5\)</span>.</p>
-<pre class="sourceCode r"><code class="sourceCode r">## Run spark
-msdata =<span class="st"> </span><span class="kw">spark</span>(<span class="dt">infile =</span> infile,
-                <span class="dt">informat =</span> <span class="st">&quot;mark&quot;</span>,
-                <span class="dt">outformat =</span> <span class="st">&quot;mark&quot;</span>)
-
-## Fit model to truncated data
-## 1) Process data
-msprocessed.trunc =
-<span class="st">  </span><span class="kw">process.data</span>(
-    msdata,
-    <span class="dt">model =</span> <span class="st">&quot;Multistrata&quot;</span>
-    )
-
-## 2) Build design data
-msddl.trunc =<span class="st"> </span><span class="kw">make.design.data</span>(msprocessed.trunc,
-                                <span class="dt">parameters =</span> <span class="kw">list</span>(
-                                  <span class="dt">Psi =</span> <span class="kw">list</span>(<span class="dt">pim.type =</span> <span class="st">&quot;constant&quot;</span>),
-                                  <span class="dt">S =</span> <span class="kw">list</span>(<span class="dt">pim.type =</span> <span class="st">&quot;time&quot;</span>),
-                                  <span class="dt">p =</span> <span class="kw">list</span>(<span class="dt">pim.type =</span> <span class="st">&quot;time&quot;</span>)
-                                ))
-
-## 3) Fit model
-
-## This is how the model is run via RMark. However, this can take some time and requires Program MARK to be installed, so that the vignette will not pass the CRAN check. 
-<span class="co"># time.trunc =</span>
-<span class="co">#   system.time(</span>
-<span class="co">#     msmodel.trunc &lt;- mark(</span>
-<span class="co">#       msprocessed.trunc,</span>
-<span class="co">#       msddl.trunc,</span>
-<span class="co">#       model.parameters = model.parameters,</span>
-<span class="co">#       threads = 4,</span>
-<span class="co">#       output = FALSE</span>
-<span class="co">#     )</span>
-<span class="co">#   )</span>
-
-## Instead, we can load stored output from a previous run.
-<span class="kw">load</span>(<span class="kw">system.file</span>(<span class="st">&quot;extdata&quot;</span>,<span class="st">&quot;msdata1000_output_trunc.RData&quot;</span>,<span class="dt">package=</span><span class="st">&quot;spark&quot;</span>))</code></pre>
+<p>I now repeat the analysis with truncated data using the default
+truncation factor, <span class="math inline">\(k=5\)</span>.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Run spark</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>msdata <span class="ot">=</span> <span class="fu">spark</span>(<span class="at">infile =</span> infile,</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>                <span class="at">informat =</span> <span class="st">&quot;mark&quot;</span>,</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">outformat =</span> <span class="st">&quot;mark&quot;</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="do">## Fit model to truncated data</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="do">## 1) Process data</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>msprocessed.trunc <span class="ot">=</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">process.data</span>(</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    msdata,</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">model =</span> <span class="st">&quot;Multistrata&quot;</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="do">## 2) Build design data</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>msddl.trunc <span class="ot">=</span> <span class="fu">make.design.data</span>(msprocessed.trunc,</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>                                <span class="at">parameters =</span> <span class="fu">list</span>(</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">Psi =</span> <span class="fu">list</span>(<span class="at">pim.type =</span> <span class="st">&quot;constant&quot;</span>),</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">S =</span> <span class="fu">list</span>(<span class="at">pim.type =</span> <span class="st">&quot;time&quot;</span>),</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">p =</span> <span class="fu">list</span>(<span class="at">pim.type =</span> <span class="st">&quot;time&quot;</span>)</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>                                ))</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="do">## 3) Fit model</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="do">## This is how the model is run via RMark. However, this can take some time and requires Program MARK to be installed, so that the vignette will not pass the CRAN check. </span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a><span class="co"># time.trunc =</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="co">#   system.time(</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a><span class="co">#     msmodel.trunc &lt;- mark(</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a><span class="co">#       msprocessed.trunc,</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="co">#       msddl.trunc,</span></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a><span class="co">#       model.parameters = model.parameters,</span></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a><span class="co">#       threads = 4,</span></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a><span class="co">#       output = FALSE</span></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a><span class="co">#     )</span></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a><span class="co">#   )</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a><span class="do">## Instead, we can load stored output from a previous run.</span></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(<span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>,<span class="st">&quot;msdata1000_output_trunc.RData&quot;</span>,<span class="at">package=</span><span class="st">&quot;spark&quot;</span>))</span></code></pre></div>
 </div>
 <div id="results" class="section level2">
 <h2>Results</h2>
 <div id="runtime" class="section level3">
 <h3>Runtime</h3>
-<p>Using four threads the elapsed runtime for the analysis of the full data set was 183.5 seconds whereas the analysis for the truncated data set was <code>round(r time.trunc[3],1)</code> seconds. This represents almost a 7-fold time savings.</p>
+<p>Using four threads the elapsed runtime for the analysis of the full
+data set was 183.5 seconds whereas the analysis for the truncated data
+set was <code>round(r time.trunc[3],1)</code> seconds. This represents
+almost a 7-fold time savings.</p>
 </div>
 <div id="inference" class="section level3">
 <h3>Inference</h3>
-<p>The following plots compare the point estimates and 95% confidence intervals for the three groups of parameters in the model. As you can see, inference based on the truncated data is almost identical to inference based on the full data set.</p>
+<p>The following plots compare the point estimates and 95% confidence
+intervals for the three groups of parameters in the model. As you can
+see, inference based on the truncated data is almost identical to
+inference based on the full data set.</p>
 <div id="survival-probabilities" class="section level4">
 <h4>Survival Probabilities</h4>
-<p><img src="data:image/png;base64,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" /><!-- --></p>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
 </div>
 <div id="capture-probabilities" class="section level4">
 <h4>Capture Probabilities</h4>
-<p><img src="data:image/png;base64,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" /><!-- --></p>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
 </div>
 <div id="transition-probabilities" class="section level4">
 <h4>Transition Probabilities</h4>
-<p><img src="data:image/png;base64,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" /><!-- --></p>
-<p>In fact, the maximum differences in the point estimates of the survival, capture, and transition probabilities were 0.02, 0.02, and 0 repsectively. The maximum relative increases in the widths of the respecitive 95% confidence intervals were 1.01, 1.02, and 1 respectively. The two analyses have produced almost identical results with the analysis of the truncated data taking one seventh of the time.</p>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+<p>In fact, the maximum differences in the point estimates of the
+survival, capture, and transition probabilities were 0.02, 0.02, and 0
+repsectively. The maximum relative increases in the widths of the
+respecitive 95% confidence intervals were 1.01, 1.02, and 1
+respectively. The two analyses have produced almost identical results
+with the analysis of the truncated data taking one seventh of the
+time.</p>
 </div>
 </div>
 </div>
 
+
+
+<!-- code folding -->
 
 
 <!-- dynamically load mathjax for compatibility with self-contained -->
@@ -180,7 +491,7 @@ msddl.trunc =<span class="st"> </span><span class="kw">make.design.data</span>(m
   (function () {
     var script = document.createElement("script");
     script.type = "text/javascript";
-    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
     document.getElementsByTagName("head")[0].appendChild(script);
   })();
 </script>
