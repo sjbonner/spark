@@ -155,8 +155,6 @@ truncateCH1livedead = function(chin, k, ragged = FALSE) {
           chout[j, release[j] + (1:min(d - 1, k))] = 0
         if (d <= k)
           chout[j, recovery] = chin[recovery]
-        
-        
       }
     }
     else if (recapture[j] < 0) {
@@ -175,6 +173,12 @@ truncateCH1livedead = function(chin, k, ragged = FALSE) {
       chout[j, release[j] + d] = chin[recapture[j]]
     }
   }
+  
+  ## Pad recovery vector with -1s
+  if(recovered)
+    recovery <- c(rep(-1, nrelease - 1),recovery)
+  else
+    recovery <- rep(-1, nrelease)
   
   ## Return new records
   list(
